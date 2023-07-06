@@ -1,11 +1,14 @@
-package etu001956.framework.servlet;
 import etu001956.framework.Mapping;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
+import etu001956.framework.annotation.Url;
+import etu001956.test_framework.*;
 
 public class FrontServlet extends HttpServlet {
     private HashMap<String, Mapping> mappingUrls;
@@ -15,13 +18,43 @@ public class FrontServlet extends HttpServlet {
         // Initialisation de l'attribut mappingUrls
         mappingUrls = new HashMap<>();
 
-        // Ajouter les mappings souhaités
-        mappingUrls.put("/url1", new Mapping("ClassName1", "method1"));
-        mappingUrls.put("/url2", new Mapping("ClassName2", "method2"));
-        // Ajoutez autant de mappings que nécessaire
+        // Obtenez la classe Emp
+  Class<?> empClass = null;
+    try {
+        empClass = Class.forName("etu001956.test_framework.Emp");
+    } catch (ClassNotFoundException e) {
+        // Gérer l'exception ici
+        e.printStackTrace();
+    }
+
+    if (empClass != null) {
+        Method[] methods = empClass.getDeclaredMethods();
+        // Le reste de votre code ici
+    }
+
+
+
+
+        // Obtenez toutes les méthodes de la classe Emp
+        Method[] methods = empClass.getDeclaredMethods();
+
+        // Parcourez les méthodes et recherchez les annotations Url
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(Url.class)) {
+                // Obtenez l'annotation Url
+                Url urlAnnotation = method.getAnnotation(Url.class);
+
+                // Obtenez la valeur de l'annotation Url
+                String url = urlAnnotation.value();
+
+                // Ajoutez le mapping à la HashMap
+                mappingUrls.put(url, new Mapping(empClass.getSimpleName(), method.getName()));
+            }
+        }
 
         super.init();
     }
+
     protected void service(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if (request.getMethod().equals("GET")) {
