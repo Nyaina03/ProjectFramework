@@ -6,7 +6,7 @@
     <title>Formulaire</title>
 </head>
 <body>
-    <form action="FrontServlet" method="post">
+    <form action="FrontServlet" method="post" enctype="multipart/form-data">
         <label for="name">Nom :</label>
         <input type="text" name="name" id="name" required><br>
 
@@ -18,6 +18,9 @@
 
         <label for="salaire">Salaire :</label>
         <input type="number" name="salaire" id="salaire" step="0.01" required><br>
+
+        <label for="file">Fichier :</label>
+        <input type="file" name="file" id="file" required><br>
 
         <input type="submit" value="Envoyer">
     </form>

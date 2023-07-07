@@ -1,6 +1,6 @@
 package etu001956.framework.servlet;
 
-import etu001956.test_framework.Emp;
+import etu001956.test_framework.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -9,6 +9,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.*;
+import javax.servlet.http.Part;
+
+
 
 public class FrontServlet extends HttpServlet {
 
@@ -20,34 +24,45 @@ public class FrontServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/emp.jsp").forward(request, response);
         } else if (request.getMethod().equals("POST")) {
             // Gérer la requête POST
-            // Exemple : Traiter les données du formulaire et stocker dans l'objet Emp
-
-            // Récupérer les valeurs saisies dans le formulaire
+            // Exemple : Traiter les données du formulaire et effectuer les actions nécessaires
             String name = request.getParameter("name");
             int age = Integer.parseInt(request.getParameter("age"));
             String dept = request.getParameter("dept");
             double salaire = Double.parseDouble(request.getParameter("salaire"));
 
-            // Créer un objet Emp avec les valeurs saisies
+            // Créer un objet Emp et setter les valeurs
             Emp emp = new Emp();
             emp.setName(name);
             emp.setAge(age);
             emp.setDept(dept);
             emp.setSalaire(salaire);
 
-            // Récupérer la liste d'objets Emp de la session
-            List<Emp> empList = (List<Emp>) request.getSession().getAttribute("empList");
+            // Récupérer le fichier uploadé
+            Part filePart = request.getPart("file");
+            String fileName = filePart.getSubmittedFileName();
+            String fileDir = "D:/uploads"; // Répertoire de stockage des fichiers
+            String filePath = fileDir + "/" + fileName;
 
-            // Vérifier si la liste n'existe pas encore, la créer
-            if (empList == null) {
-                empList = new ArrayList<>();
+            // Enregistrer le fichier sur le serveur
+            try (InputStream inputStream = filePart.getInputStream();
+                 OutputStream outputStream = new FileOutputStream(new File(filePath))) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
-            // Ajouter l'objet Emp à la liste
-            empList.add(emp);
+            // Créer un objet UploadFile avec les informations du fichier
+            UploadFile uploadFile = new UploadFile(fileName, filePath, filePart.getSize());
 
-            // Mettre à jour la liste dans la session
-            request.getSession().setAttribute("empList", empList);
+            // Setter l'objet UploadFile dans l'objet Emp
+            emp.setUploadFile(uploadFile);
+
+            // Définir l'objet Emp en tant qu'attribut de la requête
+            request.setAttribute("emp", emp);
 
             // Rediriger vers la page de succès
             request.getRequestDispatcher("success.jsp").forward(request, response);

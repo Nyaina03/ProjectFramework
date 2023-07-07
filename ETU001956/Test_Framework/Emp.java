@@ -7,6 +7,7 @@ public class Emp {
     private int age;
     private String dept;
     private double salaire;
+    private UploadFile uploadFile;
 
     @Url("/url3")
     public void myMethod() {
@@ -18,6 +19,13 @@ public class Emp {
         return name;
     }
 
+    public UploadFile getUploadFile() {
+        return uploadFile;
+    }
+
+    public void setUploadFile(UploadFile uploadFile) {
+        this.uploadFile = uploadFile;
+    }
     public void setName(String name) {
         this.name = name;
     }
