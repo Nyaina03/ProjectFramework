@@ -2,6 +2,7 @@ package etu001956.test_framework;
 
 import etu001956.framework.annotation.Url;
 
+@Scope("singleton")
 public class Emp {
     private String name;
     private int age;
