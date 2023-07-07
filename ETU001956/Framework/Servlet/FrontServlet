@@ -78,13 +78,15 @@ public class FrontServlet extends HttpServlet {
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
                 response.getWriter().write(json);
-            } else {
-                // Procéder normalement
-                // ...
+                 } else {
+                
+                    // Définir l'objet ModelView en tant qu'attribut de la requête
+                    request.setAttribute("modelView", modelView);
+                
+                    // Rediriger vers la page de succès
+                    request.getRequestDispatcher("success.jsp").forward(request, response);
+                }
 
-                // Rediriger vers la page de succès
-                request.getRequestDispatcher("success.jsp").forward(request, response);
-            }
         }
     }
 }
