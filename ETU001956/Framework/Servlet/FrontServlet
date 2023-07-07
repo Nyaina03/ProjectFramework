@@ -40,35 +40,42 @@ public class FrontServlet extends HttpServlet {
         super.init();
     }
 
-    protected void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String requestUrl = request.getRequestURI();
+protected void service(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    String requestUrl = request.getRequestURI();
 
-        Mapping mapping = mappingUrls.get(requestUrl);
+    Mapping mapping = mappingUrls.get(requestUrl);
 
-        if (mapping != null) {
-            String className = mapping.getClassName();
-            String methodName = mapping.getMethodName();
+    if (mapping != null) {
+        String className = mapping.getClassName();
+        String methodName = mapping.getMethodName();
 
-            try {
-                Class<?> clazz = Class.forName(className);
-                Method method = clazz.getDeclaredMethod(methodName);
-                Object instance = clazz.newInstance();
+        try {
+            Class<?> clazz = Class.forName(className);
+            Method method = clazz.getDeclaredMethod(methodName);
+            Object instance = clazz.newInstance();
 
-                Object result = method.invoke(instance);
+            Object result = method.invoke(instance);
 
-                if (result instanceof ModelView) {
-                    ModelView modelView = (ModelView) result;
-                    String viewUrl = modelView.getViewUrl();
+            if (result instanceof ModelView) {
+                ModelView modelView = (ModelView) result;
+                String viewUrl = modelView.getViewUrl();
 
-                    request.getRequestDispatcher(viewUrl).forward(request, response);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+                // Ajout des données à l'objet ModelView
+                modelView.addItem("key1", "value1");
+                modelView.addItem("key2", 12345);
+
+                // Transfert de l'objet ModelView à la JSP
+                request.setAttribute("modelView", modelView);
+                request.getRequestDispatcher(viewUrl).forward(request, response);
             }
-        } else {
-            // Gérer les autres cas, par exemple : afficher une erreur 404
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    } else {
+        // Gérer les autres cas, par exemple : afficher une erreur 404
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
     }
+}
+
 }
