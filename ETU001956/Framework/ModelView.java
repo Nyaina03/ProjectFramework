@@ -1,10 +1,11 @@
 package etu001956.framework;
 
+import com.google.gson.Gson;
 import java.util.HashMap;
 
 public class ModelView {
     private HashMap<String, Object> data;
-    private String viewUrl
+    private String viewUrl;
 
     public ModelView() {
         data = new HashMap<>();
@@ -28,5 +29,10 @@ public class ModelView {
 
     public void setViewUrl(String viewUrl) {
         this.viewUrl = viewUrl;
+    }
+
+    public String toJson() {
+        Gson gson = new Gson();
+        return gson.toJson(data);
     }
 }
