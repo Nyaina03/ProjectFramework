@@ -6,7 +6,7 @@
     <title>Formulaire</title>
 </head>
 <body>
-    <form action="VotreServlet" method="post">
+    <form action="FrontServlet" method="post">
         <label for="name">Nom :</label>
         <input type="text" name="name" id="name" required><br>
 
