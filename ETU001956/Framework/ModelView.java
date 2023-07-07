@@ -1,19 +1,25 @@
 package etu001956.framework;
+
+import java.util.HashMap;
+
 public class ModelView {
-    private String modelData;
+    private HashMap<String, Object> data;
     private String viewUrl;
 
-    public ModelView(String modelData, String viewUrl) {
-        this.modelData = modelData;
-        this.viewUrl = viewUrl;
+    public ModelView() {
+        data = new HashMap<>();
     }
 
-    public String getModelData() {
-        return modelData;
+    public HashMap<String, Object> getData() {
+        return data;
     }
 
-    public void setModelData(String modelData) {
-        this.modelData = modelData;
+    public void setData(HashMap<String, Object> data) {
+        this.data = data;
+    }
+
+    public void addItem(String key, Object value) {
+        data.put(key, value);
     }
 
     public String getViewUrl() {
