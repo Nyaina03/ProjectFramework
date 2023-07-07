@@ -4,19 +4,15 @@
          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
                              http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
          version="4.0">
+    <!-- Autres configurations -->
 
- <servlet>
-    <servlet-name>FrontServlet</servlet-name>
-    <servlet-class>FrontServlet</servlet-class>
-</servlet>
+    <context-param>
+        <param-name>sessionName</param-name>
+        <param-value>session</param-value>
+    </context-param>
 
-<servlet-mapping>
-    <servlet-name>FrontServlet</servlet-name>
-    <url-pattern>/</url-pattern>
-</servlet-mapping>
-
-<welcome-file-list>
-    <welcome-file></welcome-file>
-</welcome-file-list>
-
+    <context-param>
+        <param-name>profileName</param-name>
+        <param-value>role</param-value>
+    </context-param>
 </web-app>

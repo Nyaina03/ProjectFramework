@@ -1,0 +1,14 @@
+package etu001956.framework.util;
+
+import etu001956.framework.annotation.Auth;
+
+import javax.servlet.http.HttpSession;
+import java.lang.reflect.Method;
+
+public class CheckMethodUtil {
+    public static boolean checkMethod(Method method, HttpSession session) {
+        // Vérifier les annotations de la méthode
+        return method.isAnnotationPresent(Auth.class)
+                && method.getAnnotation(Auth.class).value().equals(session.getAttribute("role"));
+    }
+}

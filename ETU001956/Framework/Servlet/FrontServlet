@@ -1,10 +1,11 @@
-import etu001956.framework.annotation.Scope;
-import etu001956.test_framework.Emp;
+
+import etu001956.framework.annotation.AnnotationAuth;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,10 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FrontServlet extends HttpServlet {
-    private Map<Class<?>, Object> instanceMap;
+    private Map<String, HttpSession> sessionMap;
 
     public FrontServlet() {
-        instanceMap = new HashMap<>();
+        sessionMap = new HashMap<>();
     }
 
     protected void service(HttpServletRequest request, HttpServletResponse response)
@@ -32,24 +33,7 @@ public class FrontServlet extends HttpServlet {
             try {
                 // Vérifier si la classe est un singleton
                 Class<?> clazz = Class.forName(className);
-                Scope scopeAnnotation = clazz.getAnnotation(Scope.class);
-                boolean isSingleton = scopeAnnotation != null && scopeAnnotation.value().equals("singleton");
-
-                Object instance;
-
-                // Récupérer l'instance de la classe ou en créer une nouvelle
-                if (isSingleton) {
-                    instance = instanceMap.get(clazz);
-                    if (instance == null) {
-                        instance = clazz.getDeclaredConstructor().newInstance();
-                        instanceMap.put(clazz, instance);
-                    } else {
-                        // Réinitialiser les attributs par défaut pour une instance singleton
-                        resetAttributes(instance);
-                    }
-                } else {
-                    instance = clazz.getDeclaredConstructor().newInstance();
-                }
+                Object instance = getInstance(clazz);
 
                 // Associer les attributs du formulaire à l'instance de classe
                 for (Method method : clazz.getDeclaredMethods()) {
@@ -60,21 +44,72 @@ public class FrontServlet extends HttpServlet {
                     }
                 }
 
-                // Appeler la méthode "execute" de la classe
-                Method executeMethod = clazz.getDeclaredMethod("execute");
-                executeMethod.invoke(instance);
+                // Vérifier l'authentification
+                boolean isAuthenticated = checkAuthentication(instance, request.getSession());
 
-                // Rediriger vers la page de succès
-                request.getRequestDispatcher("success.jsp").forward(request, response);
-            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
-                    | InstantiationException | InvocationTargetException e) {
+                if (isAuthenticated) {
+                    // Appeler les méthodes annotées avec @Auth
+                    invokeAuthMethods(instance, request.getSession());
+
+                    // Rediriger vers la page de succès
+                    request.getRequestDispatcher("success.jsp").forward(request, response);
+                } else {
+                    // Rediriger vers une page d'erreur d'authentification
+                    request.getRequestDispatcher("auth_error.jsp").forward(request, response);
+                }
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException
+                    | InvocationTargetException | NoSuchMethodException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    private Object getInstance(Class<?> clazz) throws IllegalAccessException, InstantiationException {
+        // Vérifier si la classe est un singleton
+        boolean isSingleton = clazz.isAnnotationPresent(Scope.class)
+                && clazz.getAnnotation(Scope.class).value().equals("singleton");
+
+        Object instance;
+
+        // Récupérer l'instance de la classe ou en créer une nouvelle
+        if (isSingleton) {
+            instance = sessionMap.get(clazz.getName());
+            if (instance == null) {
+                instance = clazz.getDeclaredConstructor().newInstance();
+                sessionMap.put(clazz.getName(), (HttpSession) instance);
+            } else {
+                // Réinitialiser les attributs par défaut pour une instance singleton
+                resetAttributes(instance);
+            }
+        } else {
+            instance = clazz.getDeclaredConstructor().newInstance();
+        }
+
+        return instance;
+    }
+
     private void resetAttributes(Object instance) {
         // Réinitialiser les attributs par défaut de l'instance
         // TODO: Implémenter la logique pour réinitialiser les attributs
+    }
+
+    private boolean checkAuthentication(Object instance, HttpSession session) {
+        // Vérifier l'authentification de l'utilisateur
+        Auth authAnnotation = instance.getClass().getAnnotation(Auth.class);
+        if (authAnnotation != null) {
+            String requiredProfile = authAnnotation.value();
+            String userRole = (String) session.getAttribute("role");
+            return requiredProfile.equals(userRole);
+        }
+        return true;
+    }
+
+    private void invokeAuthMethods(Object instance, HttpSession session) throws IllegalAccessException, InvocationTargetException {
+        // Appeler les méthodes annotées avec @Auth
+        for (Method method : instance.getClass().getDeclaredMethods()) {
+            if (method.isAnnotationPresent(Auth.class)) {
+                method.invoke(instance);
+            }
+        }
     }
 }
