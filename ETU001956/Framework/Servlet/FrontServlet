@@ -1,6 +1,5 @@
-
-import etu001956.framework.annotation.AnnotationAuth;
-
+import etu001956.framework.ModelView;
+import com.google.gson.Gson;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -12,12 +11,8 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FrontServlet extends HttpServlet {
-    private Map<String, HttpSession> sessionMap;
 
-    public FrontServlet() {
-        sessionMap = new HashMap<>();
-    }
+public class FrontServlet extends HttpServlet {
 
     protected void service(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -28,87 +23,67 @@ public class FrontServlet extends HttpServlet {
         } else if (request.getMethod().equals("POST")) {
             // Gérer la requête POST
             // Exemple : Traiter les données du formulaire et effectuer les actions nécessaires
-            String className = request.getParameter("class");
+            String name = request.getParameter("name");
+            int age = Integer.parseInt(request.getParameter("age"));
+            String dept = request.getParameter("dept");
+            double salaire = Double.parseDouble(request.getParameter("salaire"));
 
-            try {
-                // Vérifier si la classe est un singleton
-                Class<?> clazz = Class.forName(className);
-                Object instance = getInstance(clazz);
+            // Créer un objet Emp et setter les valeurs
+            Emp emp = new Emp();
+            emp.setName(name);
+            emp.setAge(age);
+            emp.setDept(dept);
+            emp.setSalaire(salaire);
 
-                // Associer les attributs du formulaire à l'instance de classe
-                for (Method method : clazz.getDeclaredMethods()) {
-                    String attributeName = method.getName().toLowerCase().replace("set", "");
-                    String attributeValue = request.getParameter(attributeName);
-                    if (attributeValue != null) {
-                        method.invoke(instance, attributeValue);
-                    }
+            // Récupérer le fichier uploadé
+            Part filePart = request.getPart("file");
+            String fileName = filePart.getSubmittedFileName();
+            String fileDir = "D:/uploads"; // Répertoire de stockage des fichiers
+            String filePath = fileDir + "/" + fileName;
+
+            // Enregistrer le fichier sur le serveur
+            try (InputStream inputStream = filePart.getInputStream();
+                 OutputStream outputStream = new FileOutputStream(new File(filePath))) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
                 }
-
-                // Vérifier l'authentification
-                boolean isAuthenticated = checkAuthentication(instance, request.getSession());
-
-                if (isAuthenticated) {
-                    // Appeler les méthodes annotées avec @Auth
-                    invokeAuthMethods(instance, request.getSession());
-
-                    // Rediriger vers la page de succès
-                    request.getRequestDispatcher("success.jsp").forward(request, response);
-                } else {
-                    // Rediriger vers une page d'erreur d'authentification
-                    request.getRequestDispatcher("auth_error.jsp").forward(request, response);
-                }
-            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException
-                    | InvocationTargetException | NoSuchMethodException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-    }
 
-    private Object getInstance(Class<?> clazz) throws IllegalAccessException, InstantiationException {
-        // Vérifier si la classe est un singleton
-        boolean isSingleton = clazz.isAnnotationPresent(Scope.class)
-                && clazz.getAnnotation(Scope.class).value().equals("singleton");
+            // Créer un objet UploadFile avec les informations du fichier
+            UploadFile uploadFile = new UploadFile(fileName, filePath, filePart.getSize());
 
-        Object instance;
+            // Setter l'objet UploadFile dans l'objet Emp
+            emp.setUploadFile(uploadFile);
 
-        // Récupérer l'instance de la classe ou en créer une nouvelle
-        if (isSingleton) {
-            instance = sessionMap.get(clazz.getName());
-            if (instance == null) {
-                instance = clazz.getDeclaredConstructor().newInstance();
-                sessionMap.put(clazz.getName(), (HttpSession) instance);
+            // Définir l'objet Emp en tant qu'attribut de la requête
+            request.setAttribute("emp", emp);
+
+            // Créer un objet ModelView
+            ModelView modelView = new ModelView();
+
+            // Vérifier si l'attribut boolean est true
+            if (yourBooleanAttribute) {
+                // Ajouter la HashMap à l'objet ModelView
+                modelView.setData(emp.getAttributes());
+
+                // Convertir la HashMap en JSON
+                Gson gson = new Gson();
+                String json = gson.toJson(modelView.getData());
+
+                // Utiliser la réponse pour envoyer le JSON
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(json);
             } else {
-                // Réinitialiser les attributs par défaut pour une instance singleton
-                resetAttributes(instance);
-            }
-        } else {
-            instance = clazz.getDeclaredConstructor().newInstance();
-        }
+                // Procéder normalement
+                // ...
 
-        return instance;
-    }
-
-    private void resetAttributes(Object instance) {
-        // Réinitialiser les attributs par défaut de l'instance
-        // TODO: Implémenter la logique pour réinitialiser les attributs
-    }
-
-    private boolean checkAuthentication(Object instance, HttpSession session) {
-        // Vérifier l'authentification de l'utilisateur
-        Auth authAnnotation = instance.getClass().getAnnotation(Auth.class);
-        if (authAnnotation != null) {
-            String requiredProfile = authAnnotation.value();
-            String userRole = (String) session.getAttribute("role");
-            return requiredProfile.equals(userRole);
-        }
-        return true;
-    }
-
-    private void invokeAuthMethods(Object instance, HttpSession session) throws IllegalAccessException, InvocationTargetException {
-        // Appeler les méthodes annotées avec @Auth
-        for (Method method : instance.getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(Auth.class)) {
-                method.invoke(instance);
+                // Rediriger vers la page de succès
+                request.getRequestDispatcher("success.jsp").forward(request, response);
             }
         }
     }
