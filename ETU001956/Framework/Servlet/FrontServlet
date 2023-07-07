@@ -1,81 +1,56 @@
 package etu001956.framework.servlet;
-import etu001956.framework.Mapping;
-import etu001956.framework.ModelView;
-import etu001956.framework.annotation.Url;
+
+import etu001956.test_framework.Emp;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrontServlet extends HttpServlet {
-    private HashMap<String, Mapping> mappingUrls;
 
-    @Override
-    public void init() throws ServletException {
-        mappingUrls = new HashMap<>();
-        Class<?> empClass = null;
+    protected void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        if (request.getMethod().equals("GET")) {
+            // Gérer la requête GET
+            // Exemple : Rediriger la requête vers une page JSP pour l'affichage
+            request.getRequestDispatcher("/WEB-INF/views/emp.jsp").forward(request, response);
+        } else if (request.getMethod().equals("POST")) {
+            // Gérer la requête POST
+            // Exemple : Traiter les données du formulaire et stocker dans l'objet Emp
 
-        try {
-            empClass = Class.forName("etu001956.test_framework.Emp");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+            // Récupérer les valeurs saisies dans le formulaire
+            String name = request.getParameter("name");
+            int age = Integer.parseInt(request.getParameter("age"));
+            String dept = request.getParameter("dept");
+            double salaire = Double.parseDouble(request.getParameter("salaire"));
 
-        if (empClass != null) {
-            Method[] methods = empClass.getDeclaredMethods();
+            // Créer un objet Emp avec les valeurs saisies
+            Emp emp = new Emp();
+            emp.setName(name);
+            emp.setAge(age);
+            emp.setDept(dept);
+            emp.setSalaire(salaire);
 
-            for (Method method : methods) {
-                if (method.isAnnotationPresent(Url.class)) {
-                    Url urlAnnotation = method.getAnnotation(Url.class);
-                    String url = urlAnnotation.value();
-                    mappingUrls.put(url, new Mapping(empClass.getSimpleName(), method.getName()));
-                }
+            // Récupérer la liste d'objets Emp de la session
+            List<Emp> empList = (List<Emp>) request.getSession().getAttribute("empList");
+
+            // Vérifier si la liste n'existe pas encore, la créer
+            if (empList == null) {
+                empList = new ArrayList<>();
             }
+
+            // Ajouter l'objet Emp à la liste
+            empList.add(emp);
+
+            // Mettre à jour la liste dans la session
+            request.getSession().setAttribute("empList", empList);
+
+            // Rediriger vers la page de succès
+            request.getRequestDispatcher("success.jsp").forward(request, response);
         }
-
-        super.init();
     }
-
-protected void service(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-    String requestUrl = request.getRequestURI();
-
-    Mapping mapping = mappingUrls.get(requestUrl);
-
-    if (mapping != null) {
-        String className = mapping.getClassName();
-        String methodName = mapping.getMethodName();
-
-        try {
-            Class<?> clazz = Class.forName(className);
-            Method method = clazz.getDeclaredMethod(methodName);
-            Object instance = clazz.newInstance();
-
-            Object result = method.invoke(instance);
-
-            if (result instanceof ModelView) {
-                ModelView modelView = (ModelView) result;
-                String viewUrl = modelView.getViewUrl();
-
-                // Ajout des données à l'objet ModelView
-                modelView.addItem("key1", "value1");
-                modelView.addItem("key2", 12345);
-
-                // Transfert de l'objet ModelView à la JSP
-                request.setAttribute("modelView", modelView);
-                request.getRequestDispatcher(viewUrl).forward(request, response);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    } else {
-        // Gérer les autres cas, par exemple : afficher une erreur 404
-        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-    }
-}
-
 }
