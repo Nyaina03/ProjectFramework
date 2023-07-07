@@ -3,7 +3,7 @@ package etu001956.framework;
 import java.util.HashMap;
 
 public class ModelView {
-    private HashMap<String, Object> data;
+    private HashMap<String, Object> data
     private String viewUrl;
 
     public ModelView() {
