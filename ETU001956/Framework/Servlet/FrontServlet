@@ -1,4 +1,5 @@
 package etu001956.framework.servlet;
+
 import etu001956.framework.Mapping;
 import etu001956.framework.ModelView;
 import etu001956.framework.annotation.Url;
@@ -10,9 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.*;
-
+import java.util.Map;
 
 public class FrontServlet extends HttpServlet {
     private HashMap<String, Mapping> mappingUrls;
@@ -65,7 +64,7 @@ public class FrontServlet extends HttpServlet {
                     String viewUrl = modelView.getViewUrl();
 
                     Map<String, Object> data = modelView.getData();
-                    
+
                     for (String key : data.keySet()) {
                         Object value = data.get(key);
                         request.setAttribute(key, value);
@@ -79,5 +78,25 @@ public class FrontServlet extends HttpServlet {
         } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String value1 = request.getParameter("input1");
+        String value2 = request.getParameter("input2");
+
+        // Faites le traitement nécessaire avec les valeurs récupérées du formulaire
+
+        // Par exemple, ajoutez-les à un objet ModelView
+        ModelView modelView = new ModelView();
+        modelView.addItem("key1", value1);
+        modelView.addItem("key2", value2);
+        modelView.setViewUrl("target.jsp");
+
+        // Ajoutez l'objet ModelView à la requête
+        request.setAttribute("modelView", modelView);
+
+        // Dispatchez la requête à la vue appropriée
+        request.getRequestDispatcher("target.jsp").forward(request, response);
     }
 }
